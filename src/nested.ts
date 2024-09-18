@@ -1,5 +1,6 @@
 import { Answer } from "./interfaces/answer";
 import { Question, QuestionType } from "./interfaces/question";
+import { makeBlankQuestion, duplicateQuestion } from "./objects"; // Adjust the import if needed
 
 /**
  * Consumes an array of questions and returns a new array with only the questions
@@ -31,8 +32,7 @@ export function findQuestion(
     questions: Question[],
     id: number,
 ): Question | null {
-    const foundQuestion = questions.find((question) => question.id === id);
-    return foundQuestion || null;
+    return questions.find((question) => question.id === id) || null;
 }
 
 /**
@@ -55,7 +55,7 @@ export function getNames(questions: Question[]): string[] {
  * Consumes an array of questions and returns the sum total of all their points added together.
  */
 export function sumPoints(questions: Question[]): number {
-    return questions.reduce((total, question) => total + question.points, 0);
+    return questions.reduce((sum, question) => sum + question.points, 0);
 }
 
 /***
@@ -64,7 +64,7 @@ export function sumPoints(questions: Question[]): number {
 export function sumPublishedPoints(questions: Question[]): number {
     return questions
         .filter((question) => question.published)
-        .reduce((total, question) => total + question.points, 0);
+        .reduce((sum, question) => sum + question.points, 0);
 }
 
 /***
@@ -85,12 +85,12 @@ id,name,options,points,published
  * Check the unit tests for more examples!
  */
 export function toCSV(questions: Question[]): string {
-    const headers = "id,name,options,points,published";
+    const header = "id,name,options,points,published";
     const rows = questions.map(
         (question) =>
             `${question.id},${question.name},${question.options.length},${question.points},${question.published}`,
     );
-    return [headers, ...rows].join("\n");
+    return [header, ...rows].join("\n");
 }
 
 /**
@@ -123,9 +123,7 @@ export function publishAll(questions: Question[]): Question[] {
  * are the same type. They can be any type, as long as they are all the SAME type.
  */
 export function sameType(questions: Question[]): boolean {
-    if (questions.length === 0) {
-        return true;
-    }
+    if (questions.length === 0) return true;
     const firstType = questions[0].type;
     return questions.every((question) => question.type === firstType);
 }
@@ -135,15 +133,13 @@ export function sameType(questions: Question[]): boolean {
  * except that a blank question has been added onto the end. Reuse the `makeBlankQuestion`
  * you defined in the `objects.ts` file.
  */
-import { makeBlankQuestion } from "./objects";
 export function addNewQuestion(
     questions: Question[],
     id: number,
     name: string,
     type: QuestionType,
 ): Question[] {
-    const newQuestion = makeBlankQuestion(id, name, type);
-    return [...questions, newQuestion];
+    return [...questions, makeBlankQuestion(id, name, type)];
 }
 
 /***
@@ -156,11 +152,8 @@ export function renameQuestionById(
     targetId: number,
     newName: string,
 ): Question[] {
-    return questions.map(
-        (question) =>
-            question.id === targetId ?
-                { ...question, name: newName } // Update the name for the target question
-            :   question, // Return the question unchanged
+    return questions.map((question) =>
+        question.id === targetId ? { ...question, name: newName } : question,
     );
 }
 
@@ -176,19 +169,18 @@ export function changeQuestionTypeById(
     targetId: number,
     newQuestionType: QuestionType,
 ): Question[] {
-    return questions.map((question) => {
-        if (question.id === targetId) {
-            return {
+    return questions.map((question) =>
+        question.id === targetId ?
+            {
                 ...question,
                 type: newQuestionType,
                 options:
-                    newQuestionType !== "multiple_choice_question" ?
+                    newQuestionType === "short_answer_question" ?
                         []
                     :   question.options,
-            };
-        }
-        return question;
-    });
+            }
+        :   question,
+    );
 }
 
 /**
@@ -209,18 +201,13 @@ export function editOption(
 ): Question[] {
     return questions.map((question) => {
         if (question.id === targetId) {
-            let updatedOptions;
+            const newOptions = [...question.options];
             if (targetOptionIndex === -1) {
-                updatedOptions = [...question.options, newOption];
+                newOptions.push(newOption);
             } else {
-                updatedOptions = question.options.map((option, index) =>
-                    index === targetOptionIndex ? newOption : option,
-                );
+                newOptions[targetOptionIndex] = newOption;
             }
-            return {
-                ...question,
-                options: updatedOptions,
-            };
+            return { ...question, options: newOptions };
         }
         return question;
     });
@@ -232,23 +219,17 @@ export function editOption(
  * the duplicate inserted directly after the original question. Use the `duplicateQuestion`
  * function you defined previously; the `newId` is the parameter to use for the duplicate's ID.
  */
-import { duplicateQuestion } from "./objects";
-
 export function duplicateQuestionInArray(
     questions: Question[],
     targetId: number,
     newId: number,
 ): Question[] {
-    return questions.reduce<Question[]>((acc, question) => {
-        // Add the current question to the accumulator
-        acc.push(question);
-
-        // If this is the target question, duplicate it and add to the accumulator
-        if (question.id === targetId) {
-            const duplicate = duplicateQuestion(newId, question);
-            acc.push(duplicate);
-        }
-
-        return acc;
-    }, []); // Start with an empty array
+    const index = questions.findIndex((question) => question.id === targetId);
+    if (index === -1) return questions;
+    const duplicate = duplicateQuestion(newId, questions[index]);
+    return [
+        ...questions.slice(0, index + 1),
+        duplicate,
+        ...questions.slice(index + 1),
+    ];
 }
