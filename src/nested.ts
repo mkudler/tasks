@@ -7,7 +7,10 @@ import { makeBlankQuestion, duplicateQuestion } from "./objects";
  * that are `published`.
  */
 export function getPublishedQuestions(questions: Question[]): Question[] {
-    return questions.filter((question) => question.published);
+    const newQuestions: Question[] = questions.filter(
+        (question: Question): boolean => question.published,
+    );
+    return newQuestions;
 }
 
 /**
