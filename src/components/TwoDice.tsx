@@ -15,11 +15,6 @@ export function TwoDice(): React.JSX.Element {
     const [leftDie, setLeftDie] = useState<number>(1);
     const [rightDie, setRightDie] = useState<number>(2);
 
-    while (leftDie === rightDie) {
-        setLeftDie(d6());
-        setRightDie(d6());
-    }
-
     const rollLeft = () => {
         setLeftDie(d6());
     };
@@ -28,8 +23,8 @@ export function TwoDice(): React.JSX.Element {
         setRightDie(d6());
     };
 
-    const isWin = leftDie === rightDie;
-    const isLose = leftDie === 1 && rightDie === 1;
+    // const isWin = leftDie === rightDie;
+    // const isLose = leftDie === 1 && rightDie === 1;
 
     return (
         <div>
@@ -39,8 +34,9 @@ export function TwoDice(): React.JSX.Element {
                 <Button onClick={rollLeft}>Roll Left</Button>
                 <Button onClick={rollRight}>Roll Right</Button>
             </div>
-            {isWin && <p>You Win!</p>}
-            {isLose && <p>You Lose!</p>}
+            {leftDie === rightDie && (
+                <p>{leftDie === 1 ? "You lose" : "You Win"}</p>
+            )}
         </div>
     );
 }
